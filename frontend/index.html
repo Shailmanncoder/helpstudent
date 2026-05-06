@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Hub | Next-Gen Learning Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- PDF.js for PDF parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Tesseract.js for Image OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <!-- Marked and Mermaid -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <!-- KaTeX for crisp math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+    <!-- Particle Canvas (Landing) -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Auth Modal Overlay -->
+    <div id="auth-modal" class="auth-overlay" style="display:none;">
+        <div class="auth-container glass" id="auth-box">
+            <button class="auth-close-btn" id="auth-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="auth-logo-mini"><i class="fa-solid fa-graduation-cap"></i></div>
+            <h2 id="auth-title">Welcome Back</h2>
+            <p id="auth-subtitle">Log in to continue to your AI Study Hub</p>
+            
+            <form id="auth-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required placeholder="Enter username" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" required placeholder="Enter password" autocomplete="current-password">
+                        <button type="button" class="toggle-pw" id="toggle-pw"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+                <div id="auth-error" class="error-msg"></div>
+                <button type="submit" class="btn btn-full btn-glow" id="auth-submit">
+                    <span id="auth-btn-text">Log In</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+            
+            <div class="auth-toggle">
+                <span id="auth-switch-text">Don't have an account?</span>
+                <a href="#" id="auth-switch-btn">Sign Up</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Modal -->
+    <div id="logout-modal" class="auth-overlay" style="display: none;">
+        <div class="auth-container glass">
+            <h2 style="color: var(--danger-color); margin-bottom: 10px;">Log Out</h2>
+            <p style="margin-bottom: 25px;">How would you like to log out?</p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button id="btn-just-logout" class="btn btn-secondary">Just Log Out</button>
+                <button id="btn-delete-data" class="btn" style="background: var(--danger-color);">Delete Account & All Data</button>
+                <button id="btn-cancel-logout" class="btn" style="background: transparent; border: 1px solid var(--text-secondary); color: var(--text-primary);">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WELCOME SPLASH -->
+    <div id="welcome-splash" style="display:none;">
+        <canvas id="confetti-canvas"></canvas>
+        <div class="splash-content">
+            <div class="splash-avatar-ring">
+                <img id="splash-avatar" src="" alt="Avatar">
+            </div>
+            <div class="splash-level-badge">
+                <i class="fa-solid fa-star"></i> Level <span id="splash-level">1</span>
+            </div>
+            <h1 class="splash-title">Welcome back,<br><span id="splash-username" class="splash-name">Student</span>!</h1>
+            <p class="splash-tagline">Your AI study hub is ready. Let's learn something amazing!</p>
+            <div class="splash-stats">
+                <div class="splash-stat">
+                    <span class="splash-stat-val" id="splash-xp">0</span>
+                    <span class="splash-stat-lbl">Total XP</span>
+                </div>
+                <div class="splash-stat">
+                    <span class="splash-stat-val">50+</span>
+                    <span class="splash-stat-lbl">AI Tools</span>
+                </div>
+                <div class="splash-stat">
+                    <span class="splash-stat-val" id="splash-time">0m</span>
+                    <span class="splash-stat-lbl">Study Time</span>
+                </div>
+            </div>
+            <button class="btn btn-glow splash-go-btn" id="splash-go-btn">
+                Let's Explore! <i class="fa-solid fa-rocket"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- PLANS MODAL -->
+    <div id="plans-modal" class="modal-overlay" style="display:none;">
+        <div class="plans-modal-inner">
+            <button class="modal-x-btn" id="plans-modal-close"><i class="fa-solid fa-xmark"></i></button>
+            <div class="plans-modal-header">
+                <div class="plans-modal-badge"><i class="fa-solid fa-bolt"></i> Upgrade</div>
+                <h2>Unlock Your Learning Potential</h2>
+                <p>Access 40+ premium AI tools and supercharge your studies</p>
+            </div>
+            <div class="plans-grid">
+                <div class="plan-card">
+                    <div class="plan-card-icon" style="background:linear-gradient(135deg,#3b82f6,#6366f1)"><i class="fa-solid fa-seedling"></i></div>
+                    <h3 class="plan-name">Basic Spark</h3>
+                    <div class="plan-price"><span class="plan-amount">₹50</span><span class="plan-period">/ 3 months</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fa-solid fa-check"></i> Choose <strong>any 10</strong> premium tools</li>
+                        <li><i class="fa-solid fa-check"></i> All 10 free tools always included</li>
+                        <li><i class="fa-solid fa-check"></i> Gemini AI powered responses</li>
+                        <li><i class="fa-solid fa-check"></i> 90-day access</li>
+                    </ul>
+                    <button class="btn btn-plan-buy" onclick="handlePlanPurchase('basic')">Get Basic — ₹50</button>
+                </div>
+                <div class="plan-card plan-popular">
+                    <div class="plan-popular-tag"><i class="fa-solid fa-star"></i> Most Popular</div>
+                    <div class="plan-card-icon" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)"><i class="fa-solid fa-bolt"></i></div>
+                    <h3 class="plan-name">Standard</h3>
+                    <div class="plan-price"><span class="plan-amount">₹200</span><span class="plan-period">/ 3 months</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fa-solid fa-check"></i> Choose <strong>any 25</strong> premium tools</li>
+                        <li><i class="fa-solid fa-check"></i> All 10 free tools included</li>
+                        <li><i class="fa-solid fa-check"></i> Priority AI responses</li>
+                        <li><i class="fa-solid fa-check"></i> 90-day access</li>
+                    </ul>
+                    <button class="btn btn-plan-buy btn-plan-popular" onclick="handlePlanPurchase('standard')">Get Standard — ₹200</button>
+                </div>
+                <div class="plan-card">
+                    <div class="plan-card-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"><i class="fa-solid fa-crown"></i></div>
+                    <h3 class="plan-name">Pro Unlimited</h3>
+                    <div class="plan-price"><span class="plan-amount">₹600</span><span class="plan-period">/ 3 months</span></div>
+                    <ul class="plan-features">
+                        <li><i class="fa-solid fa-check"></i> <strong>ALL 50+ tools</strong> unlocked instantly</li>
+                        <li><i class="fa-solid fa-check"></i> Every future tool included</li>
+                        <li><i class="fa-solid fa-check"></i> Priority AI responses</li>
+                        <li><i class="fa-solid fa-check"></i> 90-day access</li>
+                    </ul>
+                    <button class="btn btn-plan-buy" onclick="handlePlanPurchase('pro')">Get Pro — ₹600</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEMO PAYMENT MODAL -->
+    <div id="demo-payment-modal" class="modal-overlay" style="display:none;">
+        <div class="demo-payment-inner">
+            <div class="demo-payment-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h3>Confirm Purchase</h3>
+            <div class="demo-plan-summary">
+                <div class="demo-plan-name" id="demo-plan-name-display">Standard</div>
+                <div class="demo-plan-amount" id="demo-plan-amount-display">₹200</div>
+                <p>3 months access · Activate instantly</p>
+            </div>
+            <div class="demo-notice">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Demo Mode — No real payment processed</span>
+            </div>
+            <button class="btn btn-glow" id="demo-pay-btn"><i class="fa-solid fa-bolt"></i> Confirm &amp; Activate</button>
+            <button class="btn btn-secondary" id="demo-cancel-btn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- TOOL SELECTION MODAL -->
+    <div id="tool-select-modal" class="modal-overlay" style="display:none;">
+        <div class="tool-select-inner">
+            <div class="tool-select-header">
+                <h2><i class="fa-solid fa-unlock"></i> Choose Your Tools</h2>
+                <p>Select <strong><span id="tool-select-count">10</span></strong> premium tools to unlock</p>
+                <div class="tool-select-counter">
+                    <span id="tool-select-chosen">0</span> / <span id="tool-select-max">10</span> selected
+                </div>
+            </div>
+            <div id="tool-select-grid" class="tool-select-grid"></div>
+            <div class="tool-select-footer">
+                <button class="btn btn-glow" id="tool-select-save"><i class="fa-solid fa-lock-open"></i> Unlock Selected Tools</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPGRADE POPUP -->
+    <div id="upgrade-popup" class="upgrade-popup" style="display:none;">
+        <button class="upgrade-popup-close" id="upgrade-popup-close"><i class="fa-solid fa-xmark"></i></button>
+        <div class="upgrade-popup-inner">
+            <div class="upgrade-popup-badge"><i class="fa-solid fa-bolt"></i> Special Offer</div>
+            <h3>Unlock Premium AI Tools</h3>
+            <p>Upgrade to access 40+ powerful AI tools!</p>
+            <div class="upgrade-mini-plans">
+                <div class="mini-plan" onclick="handlePlanPurchase('basic')"><strong>₹50</strong><span>10 Tools</span></div>
+                <div class="mini-plan mini-plan-popular" onclick="handlePlanPurchase('standard')">
+                    <span class="mini-popular-tag">Popular</span><strong>₹200</strong><span>25 Tools</span>
+                </div>
+                <div class="mini-plan" onclick="handlePlanPurchase('pro')"><strong>₹600</strong><span>All Tools</span></div>
+            </div>
+            <button class="btn btn-glow" id="upgrade-popup-btn">See All Plans →</button>
+        </div>
+    </div>
+
+    <!-- ====== LANDING PAGE ====== -->
+    <div id="landing-page">
+        <!-- Floating background shapes -->
+        <div class="land-blob land-blob-1"></div>
+        <div class="land-blob land-blob-2"></div>
+        <div class="land-blob land-blob-3"></div>
+
+        <!-- Navbar -->
+        <nav class="land-nav" id="land-nav">
+            <div class="land-nav-inner">
+                <a href="#" class="land-logo">
+                    <div class="land-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <span>AI<span class="land-logo-accent">Study</span>Hub</span>
+                </a>
+                <ul class="land-nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#tools-preview">Tools</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                </ul>
+                <div class="land-nav-actions">
+                    <button class="btn-land-outline" id="nav-login-btn">Log In</button>
+                    <button class="btn-land-primary" id="nav-signup-btn">
+                        Get Started <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+                <button class="land-hamburger" id="land-hamburger"><i class="fa-solid fa-bars"></i></button>
+            </div>
+            <!-- Mobile menu -->
+            <div class="land-mobile-menu" id="land-mobile-menu">
+                <a href="#features" class="land-mobile-link">Features</a>
+                <a href="#tools-preview" class="land-mobile-link">Tools</a>
+                <a href="#how-it-works" class="land-mobile-link">How It Works</a>
+                <button class="btn-land-outline" id="mobile-login-btn">Log In</button>
+                <button class="btn-land-primary" id="mobile-signup-btn">Get Started</button>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="land-hero" id="hero">
+            <div class="land-hero-content">
+                <div class="land-badge">
+                    <span class="land-badge-dot"></span>
+                    Powered by Gemini AI
+                </div>
+                <h1 class="land-hero-title">
+                    Learn Smarter with<br>
+                    <span class="land-gradient-text">AI-Powered</span><br>
+                    Study Tools
+                </h1>
+                <p class="land-hero-sub">
+                    Access 50+ intelligent study tools — from essay writing and math solving
+                    to AI tutoring and creative diagrams. Level up your learning every day.
+                </p>
+                <div class="land-hero-btns">
+                    <button class="btn-land-primary btn-land-large" id="hero-signup-btn">
+                        Start Learning Free <i class="fa-solid fa-rocket"></i>
+                    </button>
+                    <button class="btn-land-ghost" id="hero-login-btn">
+                        <i class="fa-solid fa-right-to-bracket"></i> Log In
+                    </button>
+                </div>
+                <div class="land-hero-stats">
+                    <div class="land-hero-stat">
+                        <span class="stat-num" data-target="50">0</span><span>+</span>
+                        <span class="stat-label">AI Tools</span>
+                    </div>
+                    <div class="land-stat-divider"></div>
+                    <div class="land-hero-stat">
+                        <span class="stat-num" data-target="100">0</span><span>%</span>
+                        <span class="stat-label">Free to Use</span>
+                    </div>
+                    <div class="land-stat-divider"></div>
+                    <div class="land-hero-stat">
+                        <span class="stat-num" data-target="24">0</span><span>/7</span>
+                        <span class="stat-label">Available</span>
+                    </div>
+                </div>
+            </div>
+            <div class="land-hero-visual">
+                <div class="hero-card-stack">
+                    <div class="hero-float-card card-a glass-land">
+                        <div class="hfc-icon" style="background: linear-gradient(135deg,#6366f1,#8b5cf6)"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <div>
+                            <div class="hfc-title">Essay Writer</div>
+                            <div class="hfc-sub">AI-crafted in seconds</div>
+                        </div>
+                    </div>
+                    <div class="hero-float-card card-b glass-land">
+                        <div class="hfc-icon" style="background: linear-gradient(135deg,#10b981,#059669)"><i class="fa-solid fa-square-root-variable"></i></div>
+                        <div>
+                            <div class="hfc-title">Math Solver</div>
+                            <div class="hfc-sub">Step-by-step solutions</div>
+                        </div>
+                    </div>
+                    <div class="hero-float-card card-c glass-land">
+                        <div class="hfc-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706)"><i class="fa-solid fa-trophy"></i></div>
+                        <div>
+                            <div class="hfc-title">XP &amp; Leaderboard</div>
+                            <div class="hfc-sub">Compete globally</div>
+                        </div>
+                    </div>
+                    <div class="hero-float-card card-d glass-land">
+                        <div class="hfc-icon" style="background: linear-gradient(135deg,#ef4444,#dc2626)"><i class="fa-solid fa-stopwatch"></i></div>
+                        <div>
+                            <div class="hfc-title">Focus Timer</div>
+                            <div class="hfc-sub">Pomodoro technique</div>
+                        </div>
+                    </div>
+                    <!-- Central device mockup -->
+                    <div class="hero-device glass-land">
+                        <div class="device-bar"></div>
+                        <div class="device-screen">
+                            <div class="device-msg device-msg-ai">
+                                <i class="fa-solid fa-robot"></i>
+                                <span>Solve: 3x² + 5x − 2 = 0</span>
+                            </div>
+                            <div class="device-msg device-msg-resp">
+                                x = ⅓ or x = −2 <br><small>Discriminant: 49</small>
+                            </div>
+                            <div class="device-msg device-msg-ai">
+                                <i class="fa-solid fa-robot"></i>
+                                <span>Write an essay on climate change</span>
+                            </div>
+                            <div class="device-typing">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="land-section" id="features">
+            <div class="land-section-inner">
+                <div class="land-section-label">Why Choose Us</div>
+                <h2 class="land-section-title">Everything you need to <span class="land-gradient-text">ace your studies</span></h2>
+                <p class="land-section-sub">A complete AI-powered learning ecosystem built for students of all levels.</p>
+
+                <div class="features-grid">
+                    <div class="feature-card glass-land" data-aos="0">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <h3>50+ AI Study Tools</h3>
+                        <p>Essay writer, math solver, grammar checker, code debugger, language translator, and many more.</p>
+                    </div>
+                    <div class="feature-card glass-land" data-aos="1">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#10b981,#059669)">
+                            <i class="fa-solid fa-diagram-project"></i>
+                        </div>
+                        <h3>AI Creative Studio</h3>
+                        <p>Generate flowcharts, mindmaps, sequence diagrams, and AI images from plain text descriptions.</p>
+                    </div>
+                    <div class="feature-card glass-land" data-aos="2">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <h3>XP &amp; Leaderboard</h3>
+                        <p>Earn experience points for every tool you use. Level up and compete on a global leaderboard.</p>
+                    </div>
+                    <div class="feature-card glass-land" data-aos="3">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
+                            <i class="fa-solid fa-stopwatch"></i>
+                        </div>
+                        <h3>Focus Timer</h3>
+                        <p>Built-in Pomodoro focus timer to keep you productive during study sessions.</p>
+                    </div>
+                    <div class="feature-card glass-land" data-aos="4">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                        <h3>Smart Note Taker</h3>
+                        <p>Take notes and let AI summarize them for you. Keep all your study materials organized.</p>
+                    </div>
+                    <div class="feature-card glass-land" data-aos="5">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">
+                            <i class="fa-solid fa-file-pen"></i>
+                        </div>
+                        <h3>Worksheet Generator</h3>
+                        <p>Generate custom worksheets on any topic. Submit answers and get instant AI grading.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools Preview Section -->
+        <section class="land-section land-section-dark" id="tools-preview">
+            <div class="land-section-inner">
+                <div class="land-section-label">50+ Tools</div>
+                <h2 class="land-section-title">Explore our <span class="land-gradient-text">AI Tool Library</span></h2>
+                <div class="tools-marquee-wrap">
+                    <div class="tools-marquee">
+                        <div class="marquee-track" id="marquee-track-1">
+                            <span class="mtag"><i class="fa-solid fa-pen-nib"></i> Essay Writer</span>
+                            <span class="mtag"><i class="fa-solid fa-square-root-variable"></i> Math Solver</span>
+                            <span class="mtag"><i class="fa-solid fa-spell-check"></i> Grammar Check</span>
+                            <span class="mtag"><i class="fa-solid fa-bug"></i> Code Debugger</span>
+                            <span class="mtag"><i class="fa-solid fa-graduation-cap"></i> AI Tutor</span>
+                            <span class="mtag"><i class="fa-solid fa-language"></i> Translator</span>
+                            <span class="mtag"><i class="fa-solid fa-file-pdf"></i> PDF Summarizer</span>
+                            <span class="mtag"><i class="fa-solid fa-video"></i> Video Summarizer</span>
+                            <span class="mtag"><i class="fa-solid fa-book-open"></i> Chapter Summarizer</span>
+                            <span class="mtag"><i class="fa-solid fa-paint-brush"></i> AI Art Generator</span>
+                            <span class="mtag"><i class="fa-solid fa-diagram-project"></i> Flowchart Maker</span>
+                            <span class="mtag"><i class="fa-solid fa-sitemap"></i> Mindmap Creator</span>
+                        </div>
+                        <div class="marquee-track" id="marquee-track-1b" aria-hidden="true">
+                            <span class="mtag"><i class="fa-solid fa-pen-nib"></i> Essay Writer</span>
+                            <span class="mtag"><i class="fa-solid fa-square-root-variable"></i> Math Solver</span>
+                            <span class="mtag"><i class="fa-solid fa-spell-check"></i> Grammar Check</span>
+                            <span class="mtag"><i class="fa-solid fa-bug"></i> Code Debugger</span>
+                            <span class="mtag"><i class="fa-solid fa-graduation-cap"></i> AI Tutor</span>
+                            <span class="mtag"><i class="fa-solid fa-language"></i> Translator</span>
+                            <span class="mtag"><i class="fa-solid fa-file-pdf"></i> PDF Summarizer</span>
+                            <span class="mtag"><i class="fa-solid fa-video"></i> Video Summarizer</span>
+                            <span class="mtag"><i class="fa-solid fa-book-open"></i> Chapter Summarizer</span>
+                            <span class="mtag"><i class="fa-solid fa-paint-brush"></i> AI Art Generator</span>
+                            <span class="mtag"><i class="fa-solid fa-diagram-project"></i> Flowchart Maker</span>
+                            <span class="mtag"><i class="fa-solid fa-sitemap"></i> Mindmap Creator</span>
+                        </div>
+                    </div>
+                    <div class="tools-marquee tools-marquee-reverse">
+                        <div class="marquee-track" id="marquee-track-2">
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-code"></i> Code Generator</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-question-circle"></i> Quiz Maker</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-list-check"></i> Study Planner</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-lightbulb"></i> Idea Generator</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-newspaper"></i> News Summarizer</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-user-graduate"></i> Research Helper</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-clipboard-list"></i> Worksheet Grader</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-comments"></i> AI Debate Partner</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-star"></i> Flashcard Maker</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-project-diagram"></i> Concept Mapper</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-file-code"></i> LaTeX Generator</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-image"></i> Image Explainer</span>
+                        </div>
+                        <div class="marquee-track" id="marquee-track-2b" aria-hidden="true">
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-code"></i> Code Generator</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-question-circle"></i> Quiz Maker</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-list-check"></i> Study Planner</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-lightbulb"></i> Idea Generator</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-newspaper"></i> News Summarizer</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-user-graduate"></i> Research Helper</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-clipboard-list"></i> Worksheet Grader</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-comments"></i> AI Debate Partner</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-star"></i> Flashcard Maker</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-project-diagram"></i> Concept Mapper</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-file-code"></i> LaTeX Generator</span>
+                            <span class="mtag mtag-purple"><i class="fa-solid fa-image"></i> Image Explainer</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="land-section" id="how-it-works">
+            <div class="land-section-inner">
+                <div class="land-section-label">Simple Steps</div>
+                <h2 class="land-section-title">Get started in <span class="land-gradient-text">minutes</span></h2>
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-num">01</div>
+                        <div class="step-icon"><i class="fa-solid fa-user-plus"></i></div>
+                        <h3>Create Account</h3>
+                        <p>Sign up for free in seconds — no credit card required, no setup needed.</p>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">02</div>
+                        <div class="step-icon"><i class="fa-solid fa-toolbox"></i></div>
+                        <h3>Choose a Tool</h3>
+                        <p>Browse 50+ AI study tools across writing, math, languages, coding, and more.</p>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">03</div>
+                        <div class="step-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <h3>Get AI Results</h3>
+                        <p>Enter your prompt and receive high-quality AI-generated answers instantly.</p>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num">04</div>
+                        <div class="step-icon"><i class="fa-solid fa-trophy"></i></div>
+                        <h3>Earn XP &amp; Level Up</h3>
+                        <p>Every tool use earns you XP. Compete on the global leaderboard and level up.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="land-cta">
+            <div class="land-cta-inner">
+                <div class="land-cta-blob"></div>
+                <h2>Ready to transform<br>how you study?</h2>
+                <p>Join thousands of students using AI Study Hub to achieve better results.</p>
+                <button class="btn-land-primary btn-land-large" id="cta-signup-btn">
+                    Start for Free — No Credit Card <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="land-footer">
+            <div class="land-footer-inner">
+                <div class="land-logo">
+                    <div class="land-logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <span>AI<span class="land-logo-accent">Study</span>Hub</span>
+                </div>
+                <p class="land-footer-tagline">Empowering students with intelligent learning tools.</p>
+                <p class="land-footer-copy">&copy; 2025 AI Study Hub. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+    <!-- ====== END LANDING PAGE ====== -->
+
+    <!-- Main App (Hidden by default) -->
+    <div id="app-container" class="app-wrapper" style="display: none;">
+        <!-- Animated background for app -->
+        <div class="app-bg-orb orb-1"></div>
+        <div class="app-bg-orb orb-2"></div>
+
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <!-- Sidebar -->
+        <nav class="sidebar glass">
+            <div class="logo">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>StudyHub</span>
+            </div>
+            
+            <ul class="nav-links">
+                <li class="nav-item active" data-target="dashboard">
+                    <i class="fa-solid fa-border-all"></i> Dashboard
+                </li>
+                <li class="nav-item" data-target="tools">
+                    <i class="fa-solid fa-toolbox"></i> 50+ AI Tools
+                </li>
+                <li class="nav-item premium-nav-item" data-target="notes" data-section-gate="notes">
+                    <i class="fa-solid fa-book"></i> Note Taker <i class="fa-solid fa-lock nav-lock-icon"></i>
+                </li>
+                <li class="nav-item premium-nav-item" data-target="worksheets" data-section-gate="worksheets">
+                    <i class="fa-solid fa-file-pen"></i> Worksheets <i class="fa-solid fa-lock nav-lock-icon"></i>
+                </li>
+                <li class="nav-item" data-target="creative">
+                    <i class="fa-solid fa-paintbrush"></i> AI Creative
+                </li>
+                <li class="nav-item" data-target="focus">
+                    <i class="fa-solid fa-stopwatch"></i> Focus Timer
+                </li>
+                <li class="nav-item" data-target="summarizers">
+                    <i class="fa-solid fa-compress"></i> AI Summarizers
+                </li>
+                <li class="nav-item" data-target="leaderboard">
+                    <i class="fa-solid fa-trophy"></i> Leaderboard
+                </li>
+            </ul>
+
+            <div class="nav-section-label">Quick AI Tools</div>
+            <ul class="nav-links nav-quick-tools" id="quick-tools-nav">
+                <li class="nav-item quick-tool-item" data-tool="essay-writer">
+                    <i class="fa-solid fa-pen-nib"></i> Essay Writer
+                </li>
+                <li class="nav-item quick-tool-item" data-tool="math-solver">
+                    <i class="fa-solid fa-square-root-variable"></i> Math Solver
+                </li>
+                <li class="nav-item quick-tool-item" data-tool="grammar-checker">
+                    <i class="fa-solid fa-spell-check"></i> Grammar Check
+                </li>
+                <li class="nav-item quick-tool-item" data-tool="code-debugger">
+                    <i class="fa-solid fa-bug"></i> Code Debugger
+                </li>
+                <li class="nav-item quick-tool-item" data-tool="ai-tutor">
+                    <i class="fa-solid fa-graduation-cap"></i> AI Tutor
+                </li>
+            </ul>
+
+            <div class="nav-bottom">
+                <li class="nav-item nav-upgrade-btn" id="nav-upgrade-btn" onclick="openPlansModal()">
+                    <i class="fa-solid fa-crown"></i> Upgrade Plan
+                </li>
+                <li class="nav-item" id="profile-nav-btn">
+                    <i class="fa-solid fa-user-gear"></i> Profile Settings
+                </li>
+                <li class="nav-item" id="logout-btn">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                </li>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar glass">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button id="hamburger-btn" class="icon-btn hamburger-btn" style="display: none;">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="search-bar">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" placeholder="Search tools, notes...">
+                    </div>
+                </div>
+                
+                <div class="topbar-actions">
+                    <span id="plan-badge" class="plan-badge plan-free" style="cursor:pointer;" onclick="openPlansModal()">Free</span>
+                    <button class="icon-btn" id="theme-toggle">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <div class="user-mini-wrap" id="profile-btn-wrap">
+                        <div class="user-mini" id="profile-btn">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=default" alt="User" id="mini-avatar">
+                            <div class="user-mini-info">
+                                <h4 id="mini-username">User</h4>
+                                <p>Level <span id="mini-level">1</span></p>
+                            </div>
+                            <i class="fa-solid fa-chevron-down mini-chevron" id="mini-chevron"></i>
+                        </div>
+                        <div class="mini-dropdown" id="mini-dropdown">
+                            <div class="mini-drop-item" id="drop-profile">
+                                <i class="fa-solid fa-user-gear"></i> Profile Settings
+                            </div>
+                            <div class="mini-drop-item mini-drop-upgrade" id="drop-upgrade">
+                                <i class="fa-solid fa-crown"></i> Upgrade Plan
+                            </div>
+                            <div class="mini-drop-divider"></div>
+                            <div class="mini-drop-item mini-drop-logout" id="drop-logout">
+                                <i class="fa-solid fa-sign-out-alt"></i> Logout
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section-container active">
+                <!-- Premium Hero Greeting Card -->
+                <div class="dash-hero">
+                    <div class="dash-hero-blob blob-1"></div>
+                    <div class="dash-hero-blob blob-2"></div>
+                    <div class="dash-hero-blob blob-3"></div>
+                    <div class="dash-hero-grain"></div>
+
+                    <div class="dash-hero-content">
+                        <div class="dash-hero-info">
+                            <span class="dash-hero-eyebrow">
+                                <i class="fa-solid fa-sparkles"></i>
+                                <span id="hero-time-greeting">Welcome back</span>
+                            </span>
+                            <h1 class="dash-hero-title">
+                                <span id="hero-username">there</span><span class="hero-wave">👋</span>
+                            </h1>
+                            <p class="dash-hero-quote" id="hero-quote">Small steps every day lead to big results.</p>
+                            <div class="dash-hero-actions">
+                                <button class="hero-btn hero-btn-primary" data-jump-target="tools">
+                                    <i class="fa-solid fa-bolt"></i> Explore 50+ AI Tools
+                                </button>
+                                <button class="hero-btn hero-btn-ghost" data-jump-target="focus">
+                                    <i class="fa-solid fa-stopwatch"></i> Start Focus Timer
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="dash-hero-ring">
+                            <svg viewBox="0 0 120 120">
+                                <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle class="ring-fill" cx="60" cy="60" r="52" id="ring-fill"></circle>
+                            </svg>
+                            <div class="ring-center">
+                                <span class="ring-level">Lv <span id="hero-ring-level">1</span></span>
+                                <span class="ring-xp"><span id="hero-ring-xp">0</span>%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stat Tiles -->
+                <div class="stat-grid">
+                    <div class="stat-tile stat-purple">
+                        <div class="stat-tile-icon"><i class="fa-solid fa-star"></i></div>
+                        <div class="stat-tile-info">
+                            <h3 id="dash-xp">0</h3>
+                            <p>Total XP Earned</p>
+                        </div>
+                        <div class="stat-tile-trend"><i class="fa-solid fa-arrow-trend-up"></i> Keep going</div>
+                    </div>
+                    <div class="stat-tile stat-green">
+                        <div class="stat-tile-icon"><i class="fa-solid fa-clock"></i></div>
+                        <div class="stat-tile-info">
+                            <h3 id="dash-time">0m</h3>
+                            <p>Time Studied</p>
+                        </div>
+                        <div class="stat-tile-trend"><i class="fa-solid fa-hourglass-half"></i> Lifetime</div>
+                    </div>
+                    <div class="stat-tile stat-orange">
+                        <div class="stat-tile-icon"><i class="fa-solid fa-fire"></i></div>
+                        <div class="stat-tile-info">
+                            <h3 id="dash-streak">0</h3>
+                            <p>Day Streak</p>
+                        </div>
+                        <div class="stat-tile-trend"><i class="fa-solid fa-bolt"></i> On fire</div>
+                    </div>
+                    <div class="stat-tile stat-blue">
+                        <div class="stat-tile-icon"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="stat-tile-info">
+                            <h3 id="dash-level">1</h3>
+                            <p>Current Level</p>
+                        </div>
+                        <div class="stat-tile-trend"><i class="fa-solid fa-medal"></i> Rank up</div>
+                    </div>
+                </div>
+
+                <!-- XP Progress Bar -->
+                <div class="xp-progress-container glass" id="xp-progress-bar-wrap">
+                    <div class="xp-prog-info">
+                        <span><i class="fa-solid fa-star"></i> Level <span id="xp-level-label">1</span> Progress</span>
+                        <span id="xp-prog-text">0 XP</span>
+                    </div>
+                    <div class="xp-track">
+                        <div class="xp-glow" id="xp-glow" style="width:0%"></div>
+                        <div class="xp-fill" id="xp-fill" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Quick Launch Shortcuts -->
+                <div class="quick-launch">
+                    <div class="ql-header">
+                        <div>
+                            <h3><i class="fa-solid fa-rocket"></i> Jump back in</h3>
+                            <p>Your most powerful AI shortcuts</p>
+                        </div>
+                    </div>
+                    <div class="ql-grid">
+                        <div class="ql-card" data-jump-tool="essay-writer">
+                            <div class="ql-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)"><i class="fa-solid fa-pen-nib"></i></div>
+                            <div class="ql-text">
+                                <h4>Essay Writer</h4>
+                                <p>Generate well-structured essays in seconds</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-right ql-arrow"></i>
+                        </div>
+                        <div class="ql-card" data-jump-tool="math-solver">
+                            <div class="ql-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fa-solid fa-square-root-variable"></i></div>
+                            <div class="ql-text">
+                                <h4>Math Solver</h4>
+                                <p>Step-by-step solutions for any problem</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-right ql-arrow"></i>
+                        </div>
+                        <div class="ql-card" data-jump-tool="ai-tutor">
+                            <div class="ql-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"><i class="fa-solid fa-graduation-cap"></i></div>
+                            <div class="ql-text">
+                                <h4>AI Tutor</h4>
+                                <p>Learn anything in a friendly way</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-right ql-arrow"></i>
+                        </div>
+                        <div class="ql-card" data-jump-target="notes" data-section-gate="notes">
+                            <div class="ql-icon" style="background:linear-gradient(135deg,#0ea5e9,#3b82f6)"><i class="fa-solid fa-book"></i></div>
+                            <div class="ql-text">
+                                <h4>Note Taker <i class="fa-solid fa-lock ql-lock-icon"></i></h4>
+                                <p>Smart notes summarized by AI</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-right ql-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two-column: Recommended + Activity -->
+                <div class="dash-columns">
+                    <div class="recent-tools">
+                        <div class="rt-header">
+                            <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Recommended for you</h3>
+                            <button class="rt-link" data-jump-target="tools">See all <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                        <div class="tools-grid" id="recommended-tools">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                    <div class="activity-feed glass">
+                        <div class="rt-header">
+                            <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity</h3>
+                        </div>
+                        <ul id="activity-list">
+                            <li class="activity-empty">
+                                <i class="fa-solid fa-seedling"></i>
+                                <p>Your activity will appear here</p>
+                                <span>Try a tool to get started</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tools Marketplace Section -->
+            <section id="tools" class="section-container">
+                <div class="section-header">
+                    <h2>50+ AI Tools</h2>
+                    <p>Select an AI assistant to help you with your studies.</p>
+                </div>
+                
+                <div id="tools-container">
+                    <!-- Categories populated via JS -->
+                </div>
+            </section>
+
+            <!-- Active Tool Section -->
+            <section id="active-tool" class="section-container">
+                <div class="tool-header">
+                    <button class="icon-btn" id="back-to-tools"><i class="fa-solid fa-arrow-left"></i></button>
+                    <i id="active-tool-icon" class="fa-solid fa-robot"></i>
+                    <h2 id="active-tool-name">Tool Name</h2>
+                </div>
+                
+                <div class="active-tool-workspace">
+                    <div class="tool-input-area">
+                        <textarea id="tool-input" placeholder="Enter your prompt here..."></textarea>
+                        <button class="btn" id="run-tool-btn">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Generate
+                        </button>
+                    </div>
+                    <div class="tool-output-area glass" id="tool-output">
+                        Output will appear here...
+                    </div>
+                </div>
+            </section>
+
+            <!-- Note Taker Section -->
+            <section id="notes" class="section-container">
+                <div class="section-header">
+                    <h2>AI Note Taker</h2>
+                    <p>Organize your thoughts with AI assistance.</p>
+                </div>
+
+                <div class="note-container">
+                    <div class="notes-sidebar glass" id="notes-list">
+                        <!-- Notes populated via JS -->
+                    </div>
+                    <div class="note-editor glass">
+                        <input type="text" class="note-title-input" id="note-title" placeholder="Note Title...">
+                        <textarea class="note-body" id="note-content" placeholder="Start typing your notes here..."></textarea>
+                        <div class="note-actions">
+                            <button class="btn" id="save-note-btn"><i class="fa-solid fa-save"></i> Save Note</button>
+                            <button class="btn btn-secondary" id="summarize-note-btn"><i class="fa-solid fa-compress"></i> AI Summarize</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Summarizers Section -->
+            <section id="summarizers" class="section-container">
+                <div class="section-header">
+                    <h2>AI Summarizers</h2>
+                    <p>Condense any type of content into key takeaways.</p>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="stat-card glass" style="cursor: pointer" onclick="openTool(toolsData.find(t=>t.id==='pdf-summarizer'))">
+                        <div class="stat-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                        <div class="stat-info">
+                            <h3>PDF</h3>
+                            <p>Summarizer</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass" style="cursor: pointer" onclick="openTool(toolsData.find(t=>t.id==='video-summarizer'))">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)"><i class="fa-solid fa-video"></i></div>
+                        <div class="stat-info">
+                            <h3>Video</h3>
+                            <p>Summarizer</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass" style="cursor: pointer" onclick="openTool(toolsData.find(t=>t.id==='image-summarizer'))">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fa-solid fa-image"></i></div>
+                        <div class="stat-info">
+                            <h3>Image/Diagram</h3>
+                            <p>Explainer</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass" style="cursor: pointer" onclick="openTool(toolsData.find(t=>t.id==='chapter-summarizer'))">
+                        <div class="stat-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)"><i class="fa-solid fa-book-open"></i></div>
+                        <div class="stat-info">
+                            <h3>Chapter</h3>
+                            <p>Summarizer</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Worksheets Section -->
+            <section id="worksheets" class="section-container">
+                <div class="section-header">
+                    <h2>AI Worksheet Generator</h2>
+                    <p>Generate custom interactive worksheets, submit your answers, and get instantly graded by AI.</p>
+                </div>
+                
+                <div class="glass" style="padding: 30px; margin-bottom: 30px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label>Class / Grade Level</label>
+                            <input type="text" id="ws-class" placeholder="e.g. Grade 8, High School...">
+                        </div>
+                        <div class="form-group">
+                            <label>Subject / Topic</label>
+                            <input type="text" id="ws-topic" placeholder="e.g. Algebra, World War 2...">
+                        </div>
+                        <div class="form-group">
+                            <label>Question Type</label>
+                            <select id="ws-type" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary);">
+                                <option value="Multiple Choice">Multiple Choice</option>
+                                <option value="Short Answer">Short Answer</option>
+                                <option value="True/False">True/False</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Questions</label>
+                            <input type="number" id="ws-count" value="5" min="1" max="20" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary);">
+                        </div>
+                    </div>
+                    <button id="generate-ws-btn" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-magic"></i> Generate Worksheet</button>
+                    <p id="ws-gen-status" style="margin-top: 10px; color: var(--text-secondary); text-align: center; display: none;">Generating...</p>
+                </div>
+
+                <div id="worksheet-interactive-area" style="display: none;">
+                    <div class="glass" style="padding: 30px;">
+                        <h3 id="ws-title" style="margin-bottom: 20px; color: var(--accent-primary);"></h3>
+                        <div id="ws-questions-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
+                        <button id="submit-ws-btn" class="btn btn-primary" style="margin-top: 30px; width: 100%;">Submit Answers for Grading</button>
+                    </div>
+                </div>
+
+                <div id="ws-grading-area" style="display: none; margin-top: 30px;">
+                    <div class="glass" style="padding: 30px;">
+                        <h2 style="color: var(--success-color); margin-bottom: 10px;">Grading Results</h2>
+                        <h1 id="ws-score" style="font-size: 48px; margin-bottom: 20px;"></h1>
+                        <div id="ws-feedback-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Creative Section -->
+            <section id="creative" class="section-container">
+                <div class="section-header">
+                    <h2>AI Creative Studio</h2>
+                    <p>Generate beautiful Flowcharts, Mindmaps, Sequence Diagrams, and structural designs instantly.</p>
+                </div>
+                
+                <div class="glass" style="padding: 30px; margin-bottom: 30px;">
+                    <div class="form-group">
+                        <label>Describe your Diagram / Flowchart</label>
+                        <textarea id="creative-prompt" placeholder="e.g. A flowchart showing the water cycle, or a mindmap of World War 2 causes..." rows="4" style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); outline: none; resize: vertical;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Diagram Type</label>
+                        <select id="creative-type" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary);">
+                            <option value="image">Image Generation (AI Art)</option>
+                            <option value="flowchart">Flowchart</option>
+                            <option value="mindmap">Mindmap</option>
+                            <option value="sequence">Sequence Diagram</option>
+                            <option value="classDiagram">Class Diagram</option>
+                        </select>
+                    </div>
+                    <button id="generate-creative-btn" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-paint-roller"></i> Generate Diagram</button>
+                    <p id="creative-status" style="margin-top: 10px; color: var(--text-secondary); text-align: center; display: none;">Drawing...</p>
+                </div>
+
+                <div class="glass" style="padding: 30px; display: none;" id="creative-output-container">
+                    <h3 style="margin-bottom: 20px; color: var(--accent-primary);">Generated Visual</h3>
+                    <div id="creative-diagram" style="background: white; padding: 20px; border-radius: 8px; overflow-x: auto; text-align: center;"></div>
+                </div>
+            </section>
+
+            <!-- Focus Timer Section -->
+            <section id="focus" class="section-container">
+                <div class="section-header">
+                    <h2>Focus Timer</h2>
+                    <p>Stay productive with the Pomodoro technique.</p>
+                </div>
+
+                <div class="focus-timer-card glass">
+                    <div class="timer-ring-wrap">
+                        <svg class="timer-ring" viewBox="0 0 200 200">
+                            <circle class="timer-ring-bg" cx="100" cy="100" r="88"/>
+                            <circle class="timer-ring-fill" id="timer-ring-fill" cx="100" cy="100" r="88"/>
+                        </svg>
+                        <div class="timer-inner">
+                            <div id="timer-display" class="timer-display">25:00</div>
+                            <div class="timer-label">Focus Time</div>
+                        </div>
+                    </div>
+                    <div class="timer-btns">
+                        <button class="btn" id="start-timer"><i class="fa-solid fa-play"></i> Start Focus</button>
+                        <button class="btn btn-secondary" id="reset-timer"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Leaderboard Section -->
+            <section id="leaderboard" class="section-container">
+                <div class="section-header">
+                    <h2>Global Leaderboard</h2>
+                    <p>Compete with students worldwide.</p>
+                </div>
+
+                <div class="leaderboard-list glass" id="leaderboard-list">
+                    <!-- Populated via JS -->
+                </div>
+            </section>
+            
+            <!-- Profile Settings Section -->
+            <section id="profile" class="section-container">
+                <div class="section-header">
+                    <h2>Profile Settings</h2>
+                    <p>Manage your account and personalization.</p>
+                </div>
+
+                <div class="glass" style="padding: 40px; display: flex; flex-direction: column; gap: 20px; max-width: 500px;">
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                        <img id="settings-avatar-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=default" alt="Avatar" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--accent-primary); background: #1a1a2e; object-fit: cover;">
+                        <div>
+                            <h3>Profile Picture</h3>
+                            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 6px;">Current Avatar:</p>
+                            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 8px;">Upload your own photo:</p>
+                            <input type="file" id="settings-avatar-file" accept="image/*" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary);">
+                            <input type="hidden" id="settings-avatar-url">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Display Name</label>
+                        <input type="text" id="settings-username" placeholder="Your Name" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary);">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Bio</label>
+                        <textarea id="settings-bio" placeholder="e.g. High school senior studying for SATs..." rows="3" style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); outline: none; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <button class="btn" id="save-profile-btn" style="width: 100%;"><i class="fa-solid fa-save"></i> Save Changes</button>
+                    <p id="profile-status-msg" style="text-align:center; font-size:14px;"></p>
+
+                    <div id="profile-plan-card" style="margin-top: 8px; padding: 18px 20px; border-radius: 12px; background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(168,85,247,0.12) 100%); border: 1px solid rgba(99,102,241,0.3); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="profile-plan-icon" style="font-size: 22px;">🆓</span>
+                            <div>
+                                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary);" id="profile-plan-label">Free Plan</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);" id="profile-plan-desc">10 tools available</div>
+                            </div>
+                        </div>
+                        <button id="profile-upgrade-btn" class="btn" onclick="openPlansModal()" style="padding: 8px 18px; font-size: 13px; background: linear-gradient(135deg, #6366f1, #a855f7); border: none; white-space: nowrap;">
+                            <i class="fa-solid fa-rocket"></i> Upgrade Plan
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="api.js"></script>
+    <script src="landing.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+CREATE DATABASE IF NOT EXISTS studyhub DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
+USE studyhub;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    xp INT DEFAULT 0,
+    level INT DEFAULT 1,
+    time_spent INT DEFAULT 0,
+    profile_picture TEXT DEFAULT NULL,
+    bio TEXT,
+    plan VARCHAR(20) DEFAULT 'free',
+    plan_expires_at DATETIME DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS notes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS activity (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tool_used VARCHAR(100) NOT NULL,
+    time_spent INT DEFAULT 0,
+    xp_earned INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    plan VARCHAR(20) NOT NULL DEFAULT 'free',
+    payment_id VARCHAR(255),
+    order_id VARCHAR(255),
+    amount INT DEFAULT 0,
+    expires_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS user_unlocked_tools (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tool_id VARCHAR(100) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_user_tool (user_id, tool_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
