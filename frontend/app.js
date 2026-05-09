@@ -1817,8 +1817,44 @@ function loadRazorpayCheckout(orderData) {
                 showPaymentResult('error', 'Payment Cancelled', 'You closed the payment window before completing the transaction.');
             }
         },
-        prefill: { name: currentUserData?.username || '' },
-        theme: { color: '#4f46e5' }
+        prefill: {
+            name:    currentUserData?.username || '',
+            email:   currentUserData?.email || '',
+            contact: currentUserData?.phone || ''
+        },
+        notes: { plan: orderData.plan },
+        theme: { color: '#4f46e5' },
+        method: {
+            upi:       true,
+            card:      true,
+            netbanking:true,
+            wallet:    true,
+            qr:        true,
+            emi:       false,
+            paylater:  true
+        },
+        config: {
+            display: {
+                blocks: {
+                    upi_block: {
+                        name: 'Pay using UPI',
+                        instruments: [
+                            { method: 'upi', flows: ['intent', 'collect', 'qr'] }
+                        ]
+                    },
+                    other_block: {
+                        name: 'Other Payment Methods',
+                        instruments: [
+                            { method: 'card' },
+                            { method: 'netbanking' },
+                            { method: 'wallet' }
+                        ]
+                    }
+                },
+                sequence: ['block.upi_block', 'block.other_block'],
+                preferences: { show_default_blocks: false }
+            }
+        }
     });
     rzp.on('payment.failed', function(response) {
         const desc = response?.error?.description || 'The payment could not be processed.';
