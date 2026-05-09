@@ -116,7 +116,13 @@ const api = {
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ plan })
         });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.msg || 'Failed to create order'); }
+        if (!res.ok) {
+            const e = await res.json();
+            const err = new Error(e.msg || 'Failed to create order');
+            err.already_active = !!e.already_active;
+            err.expires_at = e.expires_at;
+            throw err;
+        }
         return res.json();
     },
 

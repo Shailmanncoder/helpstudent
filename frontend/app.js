@@ -1604,6 +1604,7 @@ async function loadPlanData() {
 
 function isToolUnlocked(toolId) {
     if (!currentPlanData) return false;
+    if (currentPlanData.trial_active) return true;
     if (currentPlanData.plan === 'pro' && currentPlanData.is_active) return true;
     return currentPlanData.is_active &&
         Array.isArray(currentPlanData.unlocked_tools) &&
@@ -1611,7 +1612,9 @@ function isToolUnlocked(toolId) {
 }
 
 function isSectionUnlocked(sectionGate) {
-    if (!currentPlanData || !currentPlanData.is_active) return false;
+    if (!currentPlanData) return false;
+    if (currentPlanData.trial_active) return true;
+    if (!currentPlanData.is_active) return false;
     if (currentPlanData.plan === 'pro') return true;
     if (sectionGate === 'notes') {
         return ['basic', 'standard', 'pro'].includes(currentPlanData.plan);
@@ -1620,6 +1623,46 @@ function isSectionUnlocked(sectionGate) {
         return isToolUnlocked('worksheet-generator');
     }
     return false;
+}
+
+// ================================================================
+// CENTERED PAYMENT RESULT POPUP (animated)
+// ================================================================
+function showPaymentResult(type, title, message) {
+    document.querySelectorAll('.pay-result-overlay').forEach(n => n.remove());
+
+    const overlay = document.createElement('div');
+    overlay.className = 'pay-result-overlay';
+
+    const isSuccess = type === 'success';
+    const iconHtml = isSuccess
+        ? `<svg class="pay-result-icon-svg" viewBox="0 0 52 52">
+             <circle class="pay-result-circle" cx="26" cy="26" r="24" />
+             <path class="pay-result-check" fill="none" d="M14 27l8 8 16-18" />
+           </svg>`
+        : `<svg class="pay-result-icon-svg" viewBox="0 0 52 52">
+             <circle class="pay-result-circle pay-result-circle-fail" cx="26" cy="26" r="24" />
+             <path class="pay-result-cross" fill="none" d="M17 17 L35 35 M35 17 L17 35" />
+           </svg>`;
+
+    overlay.innerHTML = `
+      <div class="pay-result-modal pay-result-${type}">
+        <div class="pay-result-icon">${iconHtml}</div>
+        <h2 class="pay-result-title">${title}</h2>
+        <p class="pay-result-msg">${message}</p>
+        <button class="btn btn-glow pay-result-btn">${isSuccess ? 'Awesome!' : 'Close'}</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    const close = () => {
+        overlay.classList.remove('visible');
+        setTimeout(() => overlay.remove(), 350);
+    };
+    overlay.querySelector('.pay-result-btn').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    if (isSuccess) setTimeout(close, 5000);
 }
 
 function refreshSidebarLocks() {
@@ -1636,6 +1679,31 @@ function refreshSidebarLocks() {
 function openPlansModal() {
     const modal = document.getElementById('plans-modal');
     if (modal) modal.style.display = 'flex';
+    refreshPlanCardButtons();
+}
+
+function refreshPlanCardButtons() {
+    const activePlan   = currentPlanData?.is_active ? currentPlanData?.plan : null;
+    const expiresAt    = currentPlanData?.expires_at;
+    const expiresLabel = expiresAt ? new Date(expiresAt).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) : '';
+
+    document.querySelectorAll('.btn-plan-buy').forEach(btn => {
+        const onclick = btn.getAttribute('onclick') || '';
+        const m = onclick.match(/handlePlanPurchase\('(\w+)'\)/);
+        if (!m) return;
+        const planId = m[1];
+        if (!btn.dataset.originalText) btn.dataset.originalText = btn.innerHTML;
+
+        if (activePlan === planId) {
+            btn.innerHTML = `<i class="fa-solid fa-check"></i> Active till ${expiresLabel}`;
+            btn.disabled = true;
+            btn.classList.add('btn-plan-active');
+        } else {
+            btn.innerHTML = btn.dataset.originalText;
+            btn.disabled = false;
+            btn.classList.remove('btn-plan-active');
+        }
+    });
 }
 
 function closePlansModal() {
@@ -1659,7 +1727,11 @@ async function handlePlanPurchase(plan) {
             loadRazorpayCheckout(orderData);
         }
     } catch (err) {
-        showPlanToast('Failed to initiate payment: ' + err.message, 'error');
+        if (err && err.already_active) {
+            showPaymentResult('error', 'Plan Already Active', err.message || 'You already have this plan.');
+        } else {
+            showPaymentResult('error', 'Could Not Start Payment', err.message || 'Please try again.');
+        }
     }
 }
 
@@ -1708,15 +1780,16 @@ function showDemoPayment(orderData) {
 
 function loadRazorpayCheckout(orderData) {
     if (!window.Razorpay) {
-        showPlanToast('Payment gateway not loaded. Please refresh.', 'error');
+        showPaymentResult('error', 'Payment Gateway Not Loaded', 'Please refresh the page and try again.');
         return;
     }
+    const planNames = { basic: 'Basic Spark', standard: 'Standard', pro: 'Pro Unlimited' };
     const rzp = new window.Razorpay({
         key:         orderData.key_id,
         amount:      orderData.amount,
         currency:    'INR',
         name:        'AI Study Hub',
-        description: `${orderData.plan} Plan – 3 Months`,
+        description: `${planNames[orderData.plan] || orderData.plan} Plan – 3 Months`,
         order_id:    orderData.order_id,
         handler: async function(response) {
             try {
@@ -1729,17 +1802,27 @@ function loadRazorpayCheckout(orderData) {
                 currentPlanData = await api.getPlan(authToken);
                 updatePlanBadge();
                 if (result.needs_tool_selection) {
-                    openToolSelectModal(orderData.plan);
+                    showPaymentResult('success', 'Payment Successful!', `Your ${planNames[orderData.plan]} plan is active. Choose your tools next.`);
+                    setTimeout(() => openToolSelectModal(orderData.plan), 1800);
                 } else {
                     loadTools();
-                    showPlanToast('🎉 Pro Plan activated! All tools unlocked!');
+                    showPaymentResult('success', 'Payment Successful!', `🎉 ${planNames[orderData.plan]} activated! All tools unlocked.`);
                 }
             } catch (err) {
-                showPlanToast('Payment verification failed: ' + err.message, 'error');
+                showPaymentResult('error', 'Verification Failed', err.message || 'Could not verify payment.');
+            }
+        },
+        modal: {
+            ondismiss: function() {
+                showPaymentResult('error', 'Payment Cancelled', 'You closed the payment window before completing the transaction.');
             }
         },
         prefill: { name: currentUserData?.username || '' },
         theme: { color: '#4f46e5' }
+    });
+    rzp.on('payment.failed', function(response) {
+        const desc = response?.error?.description || 'The payment could not be processed.';
+        showPaymentResult('error', 'Payment Failed', desc);
     });
     rzp.open();
 }
@@ -1789,10 +1872,16 @@ function updatePlanBadge() {
     if (!badge) return;
     const labels = { free: 'Free', basic: 'Basic', standard: 'Standard', pro: 'Pro ⭐' };
     const plan   = currentPlanData?.plan || 'free';
-    badge.textContent = labels[plan] || 'Free';
-    badge.className   = 'plan-badge plan-' + plan;
+    if (currentPlanData?.trial_active && plan === 'free') {
+        badge.textContent = 'Trial';
+        badge.className = 'plan-badge plan-trial';
+    } else {
+        badge.textContent = labels[plan] || 'Free';
+        badge.className   = 'plan-badge plan-' + plan;
+    }
     updateProfilePlanCard();
     refreshSidebarLocks();
+    refreshPlanCardButtons();
 }
 
 function updateProfilePlanCard() {

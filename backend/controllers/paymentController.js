@@ -39,6 +39,19 @@ router.get('/config', (req, res) => {
 router.post('/order', auth, async (req, res) => {
     const { plan } = req.body;
     if (!PLANS[plan]) return res.status(400).json({ msg: 'Invalid plan' });
+
+    const existing = await db.get('SELECT plan, plan_expires_at FROM users WHERE id = ?', [req.user.id]);
+    if (existing && existing.plan === plan && existing.plan_expires_at) {
+        const exp = new Date(existing.plan_expires_at);
+        if (exp > new Date()) {
+            return res.status(400).json({
+                msg: `You already have an active ${PLANS[plan].name} plan until ${exp.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}.`,
+                already_active: true,
+                expires_at: existing.plan_expires_at
+            });
+        }
+    }
+
     const amount = PLANS[plan].price * 100;
 
     if (DEMO_MODE || !razorpay) {
@@ -151,7 +164,7 @@ router.post('/tools', auth, async (req, res) => {
 router.get('/plan', auth, async (req, res) => {
     try {
         const user = await db.get(
-            'SELECT plan, plan_expires_at FROM users WHERE id = ?',
+            'SELECT plan, plan_expires_at, created_at FROM users WHERE id = ?',
             [req.user.id]
         );
         const tools = await db.all(
@@ -163,10 +176,21 @@ router.get('/plan', auth, async (req, res) => {
         const expiresAt = user?.plan_expires_at;
         const isActive = plan !== 'free' && expiresAt ? new Date(expiresAt) > new Date() : false;
 
+        let trialActive = false;
+        let trialExpiresAt = null;
+        if (user?.created_at) {
+            const created = new Date(user.created_at);
+            const trialEnd = new Date(created.getTime() + 3 * 24 * 60 * 60 * 1000);
+            trialExpiresAt = trialEnd.toISOString();
+            trialActive = !isActive && trialEnd > new Date();
+        }
+
         res.json({
             plan: isActive ? plan : 'free',
             expires_at: expiresAt,
             is_active: isActive,
+            trial_active: trialActive,
+            trial_expires_at: trialExpiresAt,
             unlocked_tools: tools.map(t => t.tool_id),
             demo_mode: DEMO_MODE || !razorpay
         });
